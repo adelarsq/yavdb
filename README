@@ -1,26 +1,36 @@
-This is a mirror of http://www.vim.org/scripts/script.php?script_id=1954
 
-This is a generic Vim <->Debugger Interface Tool designed to be adaptable to any debugger application.  Currently supported debuggers include jdb and gdb.
+This is a way to integrate Vim with the JVM's debugger, jdb.  It was originally yavdb, modified to work for a Scala project.  Maybe someone else will find it useful
+
 
 Script Requirements:
 -VIM compiled with Signs, Client-Server, and Python support.
 -Python 2.5
 -An operating system with support for named pipes
+-NERDTree 
 
-Using YAVDB:
 
-  yavdb [-s servername] [-t type] <debugger command line>
+Using JVDB:
+    jvdb [-c classpath] [-n servername] [-s sourcedirs] <classname> "<breakpoint>" 
 
--s specifies the Vim servername.  If no VIM (or GVIM) window exists with this servername, a new GVIM window will be opened.  If not specified, the servername 'VimDebugger' will be used.  If multiple applications are being debugged simultaneously unique servernames must be used.
 
--t can be used to override the debugger type.  If this option is omitted the debugger name will be used as the type.  Currently supported debugger types include 'gdb' and 'jdb'.  Note that jdb will only correctly notify VIM of events when classnames are identical to filenames (other than the .java extension).
+Example:
+    jvdb -c "/home/vmarquez/project/bin" -s "src:test" com.myproject.TestClass "stop in com.myproject.TestClass$.main"
+
+
 
 VIM will have the following key mappings set:
 
-<C-F5> Run Application
 <F5> Continue Execution
 <F7> Step Into a Function
 <F8> Next Instruction
-<F9> Set Breakpoint
-<F10> Print variable value under cursor
+
+
+
+
+TODO:  I'd like to use NERDTree to display locals for each stack printed out.  If I can find out how to hook into opening a 'dir' from NERDTree, I can do more
+with dumping complex objects out. 
+
+I would love to be able to set breakpoints from inside Vim but there's no easy way to tell what line corrosponds to what class, since Scala doesn't have a 1 to 1
+source to class file ratio.  Anyone have ideas?
+
 
