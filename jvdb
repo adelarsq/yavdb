@@ -1,0 +1,319 @@
+#!/usr/bin/env python
+#
+
+# Original Author: David Morris
+# Scala and Java tweaks by: Vincent Marquez
+
+from __future__ import with_statement
+from optparse   import OptionParser
+
+import commands
+import os
+import popen2
+import re
+import string
+import sys
+import thread
+import time
+import shutil
+
+class VimJavaDebugger(object):
+    dbType     = 'jdb'
+    servername = 'VimDebugger'
+    srcDir     = ''
+    quit       = False
+    lock       = thread.allocate_lock()
+    lastFile   = ''
+    classpath  = '.'
+    curThread  = ''
+    tempDir    = ".jvdbTemp/"
+    finishedCmd = None
+
+
+    def parseLineJDB(self, pipe, line):
+        m1 = re.search('Set deferred breakpoint ([A-Za-z0-9$]+):([0-9]+)', line)
+        m2 = re.search('Set breakpoint ([A-Za-z0-9$]+):([0-9]+)$', line)
+        m4 = re.search('Removed: breakpoint ([A-Za-z0-9$]+):([0-9]+)$', line)
+        m3 = re.match('Breakpoint hit: "thread=([A-Za-z0-9]+)", ([\w\.\$\(\)]+), line=([0-9]+) bci=([0-9]+)', line)
+        m5 = re.search('Step completed: "thread=([A-Za-z0-9]+)", ([\w\.\$\(\)]+), line=([0-9]+) bci=([0-9]+)', line)
+        m6 = re.search('\[(\d+)\]\s*([A-Za-z0-9$\.]+)', line)
+        if m1:
+            print 'Breakpoint Set Detected:', m1.groups()
+            curLine  = m1.group(2)
+            classname = m1.group(1)
+            filename = self.getFileName(classname)
+            self.toVimCall('VDBBreakSet(%s, \\"%s\\", %s)' % (
+                    curLine,
+                    filename,
+                    curLine))
+        elif m2:
+            print 'Breakpoint Set Detected:', m2.groups()
+            curLine  = m2.group(2)
+            classname = m2.group(1)
+            filename = self.getFileName(classname)
+            self.toVimCall('VDBBreakSet(%s, \\"%s\\", %s)' % (
+                    curLine,
+                    filename,
+                    curLine))
+        elif m4:
+            print 'Breakpoint Clear Detected:', m4.groups()
+            curLine  = m4.group(2)
+            classname = m4.group(1)
+            filename = self.getFileName(classname)
+            self.toVimCall('VDBBreakClear(%s, \\"%s\\")' % (
+                    curLine,
+                    filename))
+        elif m3:
+            self.highlightLine(pipe, m3.group(1), m3.group(2), m3.group(3))
+            print "Breakpoint Stop Detected:", m3.groups()
+        elif m5:
+            self.highlightLine(pipe, m5.group(1), m5.group(2), m5.group(3))
+            print "Line Step Detected:", m5.groups()
+        elif m6:
+            print(m6.group(1))
+            self.appendStack(m6.group(1), m6.group(2))
+            #print "Group2 = " + m6.group(2)
+    #end def parseLineJDB
+
+    def highlightLine(self, pipe, thread, clasmeth, curLine):
+        self.curThread = thread
+        t = self.parseClassMethod(clasmeth)
+        filename = self.getFileName(t[0])
+        self.killOldStack()
+        if filename != None: 
+            self.toVimCall('VDBHighlightLine(%s, \\"%s\\")' % (
+                        curLine,
+                        filename))
+        else:
+            print "no use stepping through code we can't find..."
+            pipe.tochild.write("step up\n")
+            
+    #end def highlihgtLine
+
+    def parseClassMethod(self, str):
+        arr = str.split(".")
+        method = arr[-1]
+        if len(arr) == 2:
+            return arr[0],method
+        else:
+            return '.'.join(arr[0 : -1]), method
+        #end parseClassMethod
+
+    def createCmdPipe(self):
+        os.mkfifo('.%s' % self.servername, 0600)
+    #end def createCmdPipe
+
+    def removeCmdPipe(self):
+        os.system ("rm -f .%s" % self.servername)
+    #end def removeCmdPipe
+
+    def getFileName(self, classname):
+        filename = self.lookForScalaJava(classname)
+        if filename != None:
+            return filename
+        return None        
+    #end def getFilename
+
+    def getSrcDir(self, srcDir):
+        if srcDir[-1] != "/" or srcDir[-1] != "\\":
+            return srcDir  + "/"
+        return srcDir
+    #end def srcDir
+            
+
+    def lookForScalaJava(self, classname):
+        for src in self.srcDir.split(":"):
+            filename = self.getSrcDir(src) + classname.replace(".", "/").split("$")[0]
+            if self.fileExists(filename+".scala"):
+                return filename + ".scala"
+            if self.fileExists(filename + ".java"):
+                return filename + ".java"
+        return None
+    #end def getFileName
+
+    def fileExists(self, filename):
+        try:
+            open(filename)
+        except IOError, err:
+            return False
+        return True    
+    #end def fileExists
+
+    def monitor(self, pipe):
+        while True:
+            cmdPipe = os.popen('cat .%s' % self.servername)
+            for line in cmdPipe.readline():
+                sys.stdout.write(line)
+                pipe.tochild.write(line)
+            #end while
+            cmdPipe.close()
+            with self.lock:
+                if self.quit:
+                    break
+            #end with
+        #end while
+    #end def monitor
+
+    def receiver(self, pipe):
+        line = ''
+        while True:
+            char = pipe.fromchild.read(1)
+
+            sys.stdout.write(char)
+            sys.stdout.flush()
+
+            if char == '\n':
+                self.parseLine(pipe, line)
+                line = ''
+            else:
+                line += char
+            #end if
+
+            with self.lock:
+                if self.quit: break
+            #end with
+        #end while
+    #end def receiver
+
+    def sender(self, pipe):
+        while True:
+            char = sys.stdin.read(1)
+            pipe.tochild.write(char)
+            with self.lock:
+                if self.quit:
+                    pipe.tochild.write("quit\n")
+                    break
+                #end if
+            #end with
+        #end while
+    #end def sender
+
+    def killOldStack(self):
+        dir = self.tempDir
+        if os.path.exists(dir):
+            shutil.rmtree(dir)
+    #end killOldStack
+
+    def parsePackage(self, str):
+        return str.split(".")[-1]
+    #end def parsePackage
+
+    def appendStack(self, number, call):
+        t = self.parseClassMethod(call)
+        stackDir = self.tempDir + "["+number+"] "+ self.parsePackage(t[0]) + t[1]
+        if not os.path.exists(stackDir):
+            os.makedirs(stackDir)
+        #if done, send to VIM
+        #eh, send to ivm anyway haven't thought of the best way to figure out when it's done yet.
+        self.toVim("NERDTree "+ self.tempDir)
+        self.switchWindows()
+    #end def showStack
+
+    def finishCommand(self):
+        print "Done making dirs"
+    #end def finishCommand
+
+    def toVimCall(self, cmd, silent=True):
+        self.sendToVim(cmd, "call", silent) 
+    #end def toVim
+    
+    def toVim(self, cmd, silent=True):
+        self.sendToVim(cmd, "", silent)
+
+    def sendToVim(self, cmd, call, silent=True):
+        silent = "silent" if silent else ""
+        
+        os.system('mvim --servername %s -u NONE -U NONE --remote-send \"<C-\\\\><C-N>:%s %s %s<CR>"' % (
+            self.servername, silent, call, cmd));
+    #end toVim
+
+    def switchWindows(self):
+        os.system('mvim --servername %s silent -u NONE -U NONE --remote-send \"<C-W>p\"' % (self.servername))
+
+    #end switchWindows
+
+    def SetType(self, dbType):
+        self.dbType = dbType
+    #end def SetType
+
+    def SetServerName(self, name = "VimDebugger"):
+        self.servername = name
+    #end def SetServerName
+    
+    
+    def breakMain(data):
+        pipe.tochild.write(data)
+    #end breakMain 
+
+    def refreshDir(self, dir):
+        if os.path.exists(dir):
+            shutil.rmtree(dir)   
+        else:
+            os.makedirs(dir)
+    #refreshDir
+
+    def main(self):
+        try:
+            self.servername = self.servername.upper()
+            self.createCmdPipe()
+            self.parseLine = self.parseLineJDB            
+            servers = commands.getoutput("vim -u NONE -U NONE --serverlist")
+            servers = servers.split("\n")
+            
+            self.refreshDir(self.tempDir)
+            if not self.servername in servers:
+                os.system("mvim --servername %s" % self.servername)
+                time.sleep(0.5)
+            #end if
+
+            className  = self.args[0]
+           
+            print "classname  = " + className
+            breakpoint = "" 
+            for i in range(len(self.args)-1):
+                breakpoint += " %s" % self.args[i+1]
+          
+            toJdb = "jdb -classpath \"" + self.classpath + "\" " + className
+           
+
+            self.toVimCall('VDBInit(\\".%s\\", \\"%s\\", \\"%s\\")' % (
+                    self.servername,
+                    os.path.realpath(os.curdir),
+                    self.dbType))
+
+            pipe = popen2.Popen3(toJdb, capturestderr=False, bufsize=0)
+            #pipe = subprocess.Popen([cmd,args], bufsize=0, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
+            pipe.tochild.write(breakpoint+"\n")
+            pipe.tochild.write("run\n")
+            
+            thread.start_new_thread(self.receiver, (pipe,))
+            thread.start_new_thread(self.sender,   (pipe,))
+            thread.start_new_thread(self.monitor,  (pipe,))
+
+            try:
+                while True:
+                    if pipe.poll() != -1:
+                        self.quit = True
+                        break
+                    time.sleep(0.1)
+            except KeyboardInterrupt, ex:
+                with self.lock:
+                    self.quit = True
+            time.sleep(0.3)
+            self.toVimCall("VDBClose()")
+        finally:
+            self.removeCmdPipe()
+    #end def main
+#end class VimJavaDebugger
+
+if __name__ == "__main__":
+    obj = VimJavaDebugger()
+    parser = OptionParser()
+    parser.add_option("-c", "--classpath", help="Classpath for JDB", dest="classpath", default=".")
+    parser.add_option("-n", "--servername", help="GVIM Server Name", dest="servername", default="VimDebugger")
+    parser.add_option("-s", "--sourcedir", help="Src directories, seperated by :", dest="srcDir", default="")
+    (options,args) = parser.parse_args(sys.argv[1:], obj)
+    obj.args = args
+    obj.main()
+#end if
+
