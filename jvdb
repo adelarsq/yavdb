@@ -19,6 +19,7 @@ import shutil
 
 class VimJavaDebugger(object):
     dbType     = 'jdb'
+    vimCmd     = 'mvim'
     servername = 'VimDebugger'
     srcDir     = ''
     quit       = False
@@ -223,12 +224,12 @@ class VimJavaDebugger(object):
     def sendToVim(self, cmd, call, silent=True):
         silent = "silent" if silent else ""
         
-        os.system('mvim --servername %s -u NONE -U NONE --remote-send \"<C-\\\\><C-N>:%s %s %s<CR>"' % (
+        os.system( self.vimCmd + ' --servername %s -u NONE -U NONE --remote-send \"<C-\\\\><C-N>:%s %s %s<CR>"' % (
             self.servername, silent, call, cmd));
     #end toVim
 
     def switchWindows(self):
-        os.system('mvim --servername %s silent -u NONE -U NONE --remote-send \"<C-W>p\"' % (self.servername))
+        os.system( self.vimCmd + ' --servername %s silent -u NONE -U NONE --remote-send \"<C-W>p\"' % (self.servername))
 
     #end switchWindows
 
@@ -262,7 +263,7 @@ class VimJavaDebugger(object):
             
             self.refreshDir(self.tempDir)
             if not self.servername in servers:
-                os.system("mvim --servername %s" % self.servername)
+                os.system(self.vimCmd +" --servername %s" % self.servername)
                 time.sleep(0.5)
             #end if
 
