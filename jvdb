@@ -201,6 +201,7 @@ class VimJavaDebugger(object):
 
     def appendStack(self, number, call):
         t = self.parseClassMethod(call)
+        print "t1= "+t[1]
         stackDir = self.tempDir + "["+number+"] "+ self.parsePackage(t[0]) + t[1]
         if not os.path.exists(stackDir):
             os.makedirs(stackDir)

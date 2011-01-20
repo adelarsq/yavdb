@@ -1,6 +1,7 @@
 
 This is a way to integrate Vim with the JVM's debugger, jdb.  It was originally yavdb, modified to work for a Scala project.  Maybe someone else will find it useful
 
+Video of it being used: http://www.youtube.com/watch?v=COyzt0DvCZY
 
 Script Requirements:
 -VIM compiled with Signs, Client-Server, and Python support.
