@@ -1,4 +1,3 @@
-
 This is a way to integrate Vim with the JVM's debugger, jdb.  It was originally yavdb, modified to work for a Scala project.  Maybe someone else will find it useful
 
 Video of it being used: http://www.youtube.com/watch?v=COyzt0DvCZY
@@ -30,8 +29,3 @@ VIM will have the following key mappings set:
 
 TODO:  I'd like to use NERDTree to display locals for each stack printed out.  If I can find out how to hook into opening a 'dir' from NERDTree, I can do more
 with dumping complex objects out. 
-
-I would love to be able to set breakpoints from inside Vim but there's no easy way to tell what line corrosponds to what class, since Scala doesn't have a 1 to 1
-source to class file ratio.  Anyone have ideas?
-
-
