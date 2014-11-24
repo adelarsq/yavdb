@@ -33,3 +33,7 @@ Vim will have the following key mappings set:
 - <F7> Step Into a Function
 - <F8> Next Instruction
 
+## Test
+
+Launch `./test.sh`
+
