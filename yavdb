@@ -19,7 +19,7 @@ import shutil
 
 class VimJavaDebugger(object):
     dbType     = 'jdb'
-    vimCmd     = 'mvim'
+    vimCmd     = 'vim'
     servername = 'VimDebugger'
     srcDir     = ''
     quit       = False
