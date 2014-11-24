@@ -1,0 +1,2 @@
+I'd like to use NERDTree to display locals for each stack printed out. If I can find out how to hook into opening a 'dir' from NERDTree, I can do more with dumping complex objects out.
+

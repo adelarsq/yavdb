@@ -1,31 +1,35 @@
-This is a way to integrate Vim with the JVM's debugger, jdb.  It was originally yavdb, modified to work for a Scala project.  Maybe someone else will find it useful
+# yavdb
 
-Video of it being used: http://www.youtube.com/watch?v=COyzt0DvCZY
+yavdb modified to work for a Scala project.
 
-Script Requirements:
--VIM compiled with Signs, Client-Server, and Python support.
--Python 2.5
--An operating system with support for named pipes
--NERDTree 
+## Usage
 
+See it in use: [video](http://www.youtube.com/watch?v=COyzt0DvCZY)
 
-Using JVDB:
-    jvdb [-c classpath] [-n servername] [-s sourcedirs] <classname> "<breakpoint>" 
+## Requirements
 
+- VIM compiled with Signs, Client-Server, and Python support.
+- Python 2.5
+- An operating system with support for named pipes
+- NERDTree 
 
-Example:
+## Use
+
+    yavdb [-c classpath] [-n servername] [-s sourcedirs] <classname> "<breakpoint>" 
+
+- -c: path for compiled classes
+- -n: vim servername
+- -s: path for source classes
+
+example:
+
     jvdb -c "/home/vmarquez/project/bin" -s "src:test" com.myproject.TestClass "stop in com.myproject.TestClass$.main"
 
+## Key mapping
 
+Vim will have the following key mappings set:
 
-VIM will have the following key mappings set:
+- <F5> Continue Execution
+- <F7> Step Into a Function
+- <F8> Next Instruction
 
-<F5> Continue Execution
-<F7> Step Into a Function
-<F8> Next Instruction
-
-
-
-
-TODO:  I'd like to use NERDTree to display locals for each stack printed out.  If I can find out how to hook into opening a 'dir' from NERDTree, I can do more
-with dumping complex objects out. 
