@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 
 from __future__ import with_statement
@@ -52,7 +52,6 @@ class VimJavaDebugger(object):
         else:
             pass
             #print 'VDBVIM LINE READ:', line
-    #end def parseLineGDB
 
     def parseLineJDB(self, pipe, line):
         m1 = re.search('Set deferred breakpoint ([A-Za-z0-9]+):([0-9]+)', line)
@@ -98,15 +97,12 @@ class VimJavaDebugger(object):
                     curLine,
                     filename))
             print 'Line Step Detected:', m5.groups()
-    #end def parseLineJDB
 
     def createCmdPipe(self):
         os.mkfifo('.%s' % self.servername, 0600)
-    #end def createCmdPipe
 
     def removeCmdPipe(self):
         os.system ("rm -f .%s" % self.servername)
-    #end def removeCmdPipe
 
     def monitor(self, pipe):
         while True:
@@ -114,14 +110,10 @@ class VimJavaDebugger(object):
             for line in cmdPipe.readline():
                 sys.stdout.write(line)
                 pipe.tochild.write(line)
-            #end while
             cmdPipe.close()
             with self.lock:
                 if self.quit:
                     break
-            #end with
-        #end while
-    #end def monitor
 
     def receiver(self, pipe):
         line = ''
@@ -136,13 +128,9 @@ class VimJavaDebugger(object):
                 line = ''
             else:
                 line += char
-            #end if
 
             with self.lock:
                 if self.quit: break
-            #end with
-        #end while
-    #end def receiver
 
     def sender(self, pipe):
         while True:
@@ -152,24 +140,17 @@ class VimJavaDebugger(object):
                 if self.quit:
                     pipe.tochild.write('quit\n')
                     break
-                #end if
-            #end with
-        #end while
-    #end def sender
 
     def toVim(self, cmd, silent=True):
         silent = "silent" if silent else ""
         os.system('vim --servername %s -u NONE -U NONE --remote-send \"<C-\\\\><C-N>:%s call %s<CR>"' % (
                 self.servername, silent, cmd));
-    #end def toVim
 
     def SetType(self, dbType):
         self.dbType = dbType
-    #end def SetType
 
     def SetServerName(self, name = "VimDebugger"):
         self.servername = name
-    #end def SetServerName
 
     def main(self):
         try:
@@ -186,12 +167,10 @@ class VimJavaDebugger(object):
             if not self.servername in servers:
                 os.system("gvim --servername %s" % self.servername)
                 time.sleep(0.5)
-            #end if
 
             cmd = ""
             for arg in self.args:
                 cmd += " %s" % arg
-            #end for arg
 
             self.toVim('VDBInit(\\".%s\\", \\"%s\\", \\"%s\\")' % (
                     self.servername,
@@ -209,18 +188,13 @@ class VimJavaDebugger(object):
                         self.quit = True
                         break
                     time.sleep(0.1)
-                #end while
             except KeyboardInterrupt, ex:
                 with self.lock:
                     self.quit = True
-            #end try...except
             time.sleep(0.3)
             self.toVim("VDBClose()")
         finally:
             self.removeCmdPipe()
-        #end try
-    #end def main
-#end class VimJavaDebugger
 
 if __name__ == "__main__":
     obj = VimJavaDebugger()
@@ -230,7 +204,4 @@ if __name__ == "__main__":
     (options,args) = parser.parse_args(sys.argv[1:], obj)
     obj.args = args
     obj.main()
-#end if
 
-# vim:set et ts=4 sw=4:
-#EOF
