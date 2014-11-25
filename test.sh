@@ -1,13 +1,12 @@
 #!/bin/bash
 
-#compile
-
+#clean environment
 rm -rf .jvdbTemp
-rm .VIMDEBUGGER
+rm -f .VIMDEBUGGER
 
-cd test
-javac HelloWorld.java
-cd ..
+#compile
+rm -rf test/*.class
+javac -g test/HelloWorld.java
 
 # launch test
 ./yavdb -s . test.HelloWorld "stop in test.HelloWorld.main"
