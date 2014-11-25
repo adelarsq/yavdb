@@ -1,2 +1,9 @@
 I'd like to use NERDTree to display locals for each stack printed out. If I can find out how to hook into opening a 'dir' from NERDTree, I can do more with dumping complex objects out.
 
+attach to process
+
+    $ java -agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=n MyClass
+
+    $jdb -attach 8000
+
+add other commands mentioned in jdb> help specially reenter pop, etc
