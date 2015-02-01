@@ -1,5 +1,4 @@
 #!/usr/bin/env python2
-#
 
 # Original Author: David Morris
 # Scala and Java tweaks by: Vincent Marquez
@@ -39,7 +38,7 @@ class VimJavaDebugger(object):
         m5 = re.search('Step completed: "thread=([A-Za-z0-9]+)", ([\w\.\$\(\)]+), line=([0-9]+) bci=([0-9]+)', line)
         m6 = re.search('\[(\d+)\]\s*([A-Za-z0-9$\.]+)', line)
         if m1:
-            print 'Breakpoint Set Detected:', m1.groups()
+            #print 'Breakpoint Set Detected:', m1.groups()
             curLine  = m1.group(2)
             classname = m1.group(1)
             filename = self.getFileName(classname)
@@ -48,7 +47,7 @@ class VimJavaDebugger(object):
                     filename,
                     curLine))
         elif m2:
-            print 'Breakpoint Set Detected:', m2.groups()
+            #print 'Breakpoint Set Detected:', m2.groups()
             curLine  = m2.group(2)
             classname = m2.group(1)
             filename = self.getFileName(classname)
@@ -57,7 +56,7 @@ class VimJavaDebugger(object):
                     filename,
                     curLine))
         elif m4:
-            print 'Breakpoint Clear Detected:', m4.groups()
+            #print 'Breakpoint Clear Detected:', m4.groups()
             curLine  = m4.group(2)
             classname = m4.group(1)
             filename = self.getFileName(classname)
@@ -66,12 +65,12 @@ class VimJavaDebugger(object):
                     filename))
         elif m3:
             self.highlightLine(pipe, m3.group(1), m3.group(2), m3.group(3))
-            print "Breakpoint Stop Detected:", m3.groups()
+            #print "Breakpoint Stop Detected:", m3.groups()
         elif m5:
             self.highlightLine(pipe, m5.group(1), m5.group(2), m5.group(3))
-            print "Line Step Detected:", m5.groups()
+            #print "Line Step Detected:", m5.groups()
         elif m6:
-            print(m6.group(1))
+            #print(m6.group(1))
             self.appendStack(m6.group(1), m6.group(2))
 
     def highlightLine(self, pipe, thread, clasmeth, curLine):
@@ -84,7 +83,7 @@ class VimJavaDebugger(object):
                         curLine,
                         filename))
         else:
-            print "no use stepping through code we can't find..."
+            #print "no use stepping through code we can't find..."
             pipe.tochild.write("step up\n")
 
     def parseClassMethod(self, str):
@@ -132,7 +131,7 @@ class VimJavaDebugger(object):
         while True:
             cmdPipe = os.popen('cat .%s' % self.servername)
             for line in cmdPipe.readline():
-                sys.stdout.write(line)
+                #sys.stdout.write(line)
                 pipe.tochild.write(line)
             cmdPipe.close()
             with self.lock:
@@ -144,8 +143,8 @@ class VimJavaDebugger(object):
         while True:
             char = pipe.fromchild.read(1)
 
-            sys.stdout.write(char)
-            sys.stdout.flush()
+            #sys.stdout.write(char)
+            #sys.stdout.flush()
 
             if char == '\n':
                 self.parseLine(pipe, line)
@@ -175,7 +174,7 @@ class VimJavaDebugger(object):
 
     def appendStack(self, number, call):
         t = self.parseClassMethod(call)
-        print "t1= "+t[1]
+        #print "t1= "+t[1]
         stackDir = self.tempDir + "["+number+"] "+ self.parsePackage(t[0]) + t[1]
         if not os.path.exists(stackDir):
             os.makedirs(stackDir)
@@ -185,7 +184,8 @@ class VimJavaDebugger(object):
         self.switchWindows()
 
     def finishCommand(self):
-        print "Done making dirs"
+        #print "Done making dirs"
+        pass
 
     def toVimCall(self, cmd, silent=True):
         self.sendToVim(cmd, "call", silent) 
@@ -232,7 +232,7 @@ class VimJavaDebugger(object):
 
             className  = self.args[0]
            
-            print "classname  = " + className
+            #print "classname  = " + className
             breakpoint = "" 
             for i in range(len(self.args)-1):
                 breakpoint += " %s" % self.args[i+1]
