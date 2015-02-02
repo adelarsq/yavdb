@@ -38,12 +38,7 @@ function! VDBInit(fifo, pwd, type)
 endfunction
 
 function! VDBClose()
-    "call s:DeleteMenu()
-    "redir! > .gdbvim_breakpoints
-    "silent call s:DumpBreakpoints()
-    "redir END
     sign unplace *
-    "let s:BpSet = ""
     let s:connected=0
 endfunction
 
@@ -61,8 +56,6 @@ function! VDBCommand(cmd, ...)
    endif
     
     " Send the command
-    "silent exec ":redir >>" . s:fifo ."|echon \"" . a:cmd.suff . "\n\"|redir END "
-    "silent exec ':!echo "' . a:cmd . suff . '" >> ' . s:fifo
     python fd = open(fifo, 'w')
     exec 'python fd.write("%s\n" % "' . a:cmd . suff . '")'
     python fd.close()
