@@ -38,8 +38,8 @@ function! VDBInit(fifo, pwd, type)
 endfunction
 
 function! VDBClose()
-    sign unplace *
-    let s:connected=0
+   sign unplace *
+   let s:connected=0
 endfunction
 
 function! VDBCommand(cmd, ...)
@@ -55,10 +55,10 @@ function! VDBCommand(cmd, ...)
       let suff = " " . a:1
    endif
     
-    " Send the command
-    python fd = open(fifo, 'w')
-    exec 'python fd.write("%s\n" % "' . a:cmd . suff . '")'
-    python fd.close()
+   " Send the command
+   python fd = open(fifo, 'w')
+   exec 'python fd.write("%s\n" % "' . a:cmd . suff . '")'
+   python fd.close()
 endfunction
 
 function! VDBBreakSet(id, file, linenum)
