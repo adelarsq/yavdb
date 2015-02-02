@@ -1,6 +1,6 @@
-"if exists("loaded_vimdebugger")
-"   finish
-"endif
+if exists("loaded_vimdebugger")
+   finish
+endif
 
 let loaded_vimdebugger = 1
 let s:connected   = 0
