@@ -178,10 +178,6 @@ class VimJavaDebugger(object):
         stackDir = self.tempDir + "["+number+"] "+ self.parsePackage(t[0]) + t[1]
         if not os.path.exists(stackDir):
             os.makedirs(stackDir)
-        #if done, send to VIM
-        #eh, send to ivm anyway haven't thought of the best way to figure out when it's done yet.
-        self.toVim("NERDTree "+ self.tempDir)
-        self.switchWindows()
 
     def finishCommand(self):
         #print "Done making dirs"
@@ -198,18 +194,6 @@ class VimJavaDebugger(object):
         
         os.system( self.vimCmd + ' --servername %s -u NONE -U NONE --remote-send \"<C-\\\\><C-N>:%s %s %s<CR>"' % (
             self.servername, silent, call, cmd));
-
-    def switchWindows(self):
-        os.system( self.vimCmd + ' --servername %s silent -u NONE -U NONE --remote-send \"<C-W>p\"' % (self.servername))
-
-    def SetType(self, dbType):
-        self.dbType = dbType
-
-    def SetServerName(self, name = "VimDebugger"):
-        self.servername = name
-    
-    def breakMain(data):
-        pipe.tochild.write(data)
 
     def refreshDir(self, dir):
         if os.path.exists(dir):
@@ -250,7 +234,7 @@ class VimJavaDebugger(object):
             pipe.tochild.write("run\n")
             
             thread.start_new_thread(self.receiver, (pipe,))
-            thread.start_new_thread(self.sender,   (pipe,))
+            #thread.start_new_thread(self.sender,   (pipe,))
             thread.start_new_thread(self.monitor,  (pipe,))
 
             try:
