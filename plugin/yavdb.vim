@@ -104,7 +104,6 @@ endfunction
 
 function! VDBKeyUnMap()
     silent! nunmap <F5>
-    silent! nunmap <F5>
     silent! nunmap <F6>
     silent! nunmap <F7>
     silent! nunmap <F8>
@@ -122,8 +121,7 @@ function! VDBKeyMap()
         map <unique> <F6>          :Vdb cont<CR>
         map <unique> <F7>          :Vdb step<CR>
         map <unique> <F8>          :Vdb next<CR>
-        "would love to have break functionality but we can't determine what class it's in...
-       " nmap <unique> <F9>          :execute "Vdb stop at " . substitute(bufname("%"), "", "") . ":" . line(".")<CR>
+        nmap <unique> <F9>          :execute "Vdb stop at " . substitute(bufname("%"), "", "") . ":" . line(".")<CR>
         vmap <unique> <F10>         "gy:Vdb print <C-R>g<CR>
         nmap <unique> <F11>         :Vdb print <C-R><C-W><CR>
    endif
